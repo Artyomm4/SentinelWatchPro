@@ -1,0 +1,115 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: auth, namespace: sentinelwatch}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: auth}}
+  template:
+    metadata: {labels: {app: auth}}
+    spec:
+      containers:
+      - name: auth
+        image: YOUR_REGISTRY/sentinelwatch-auth:latest
+        ports: [{containerPort: 8000}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: auth, namespace: sentinelwatch}
+spec:
+  selector: {app: auth}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: monitoring, namespace: sentinelwatch}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: monitoring}}
+  template:
+    metadata: {labels: {app: monitoring}}
+    spec:
+      containers:
+      - name: monitoring
+        image: YOUR_REGISTRY/sentinelwatch-monitoring:latest
+        ports: [{containerPort: 8000}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: monitoring, namespace: sentinelwatch}
+spec:
+  selector: {app: monitoring}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: reports, namespace: sentinelwatch}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: reports}}
+  template:
+    metadata: {labels: {app: reports}}
+    spec:
+      containers:
+      - name: reports
+        image: YOUR_REGISTRY/sentinelwatch-reports:latest
+        ports: [{containerPort: 8000}]
+        env:
+        - name: AZURE_STORAGE_CONNECTION_STRING
+          valueFrom: {secretKeyRef: {name: sentinelwatch-cloud, key: AZURE_STORAGE_CONNECTION_STRING}}
+        - name: AZURE_STORAGE_CONTAINER
+          value: sentinelwatch-reports
+---
+apiVersion: v1
+kind: Service
+metadata: {name: reports, namespace: sentinelwatch}
+spec:
+  selector: {app: reports}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: gateway, namespace: sentinelwatch}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: gateway}}
+  template:
+    metadata: {labels: {app: gateway}}
+    spec:
+      containers:
+      - name: gateway
+        image: YOUR_REGISTRY/sentinelwatch-gateway:latest
+        ports: [{containerPort: 8000}]
+        env:
+        - name: MONITORING_URL
+          value: http://monitoring:8000
+        - name: REPORTS_URL
+          value: http://reports:8000
+---
+apiVersion: v1
+kind: Service
+metadata: {name: gateway, namespace: sentinelwatch}
+spec:
+  selector: {app: gateway}
+  ports: [{port: 8000, targetPort: 8000}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: frontend, namespace: sentinelwatch}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: frontend}}
+  template:
+    metadata: {labels: {app: frontend}}
+    spec:
+      containers:
+      - name: frontend
+        image: YOUR_REGISTRY/sentinelwatch-frontend:latest
+        ports: [{containerPort: 80}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: frontend, namespace: sentinelwatch}
+spec:
+  type: LoadBalancer
+  selector: {app: frontend}
+  ports: [{port: 80, targetPort: 80}]

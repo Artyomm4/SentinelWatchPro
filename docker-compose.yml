@@ -1,0 +1,21 @@
+services:
+  frontend:
+    build: ./frontend
+    ports: ["8080:80"]
+    depends_on: [gateway]
+  gateway:
+    build: ./services/gateway
+    environment:
+      MONITORING_URL: http://monitoring:8000
+      REPORTS_URL: http://reports:8000
+    ports: ["8000:8000"]
+    depends_on: [monitoring, reports]
+  auth:
+    build: ./services/auth
+  monitoring:
+    build: ./services/monitoring
+  reports:
+    build: ./services/reports
+    environment:
+      AZURE_STORAGE_CONNECTION_STRING: ""
+      AZURE_STORAGE_CONTAINER: sentinelwatch-reports

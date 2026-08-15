@@ -1,0 +1,9 @@
+import {useEffect,useState} from "react";
+import {Download,FileBarChart2,FileText,FolderOpen,Plus,ShieldCheck} from "lucide-react";
+import Layout from "../components/Layout";
+import {fallbackReports} from "../data/demo";
+export default function Reports(){const[r,setR]=useState(fallbackReports);useEffect(()=>{fetch("/api/reports").then(x=>x.ok?x.json():Promise.reject()).then(setR).catch(()=>{})},[]);
+return <Layout title="Reports" subtitle="Readable security summaries for reviews, meetings and follow-up."><div className="report-hero"><div><span className="eyebrow">REPORTING</span><h2>Keep your security reviews simple.</h2><p>SentinelWatch turns recent monitoring activity into short reports that a business owner can understand.</p></div><div className="report-hero-icon"><FileBarChart2 size={30}/></div></div>
+<div className="report-actions"><div><strong>3 reports available</strong><span>Reports can be stored in Azure Blob Storage when cloud storage is configured.</span></div><button className="primary-button"><Plus size={16}/> Generate report</button></div>
+<div className="panel report-list"><div className="list-header"><span>REPORT</span><span>PERIOD</span><span>SIZE</span><span/></div>{r.map(x=><div className="report-row" key={x.id}><div className="report-name"><div className="file-icon"><FileText size={18}/></div><div><strong>{x.name}</strong><small>Security report · PDF</small></div></div><span>{x.period}</span><span>{x.size}</span><button className="icon-button"><Download size={17}/></button></div>)}</div>
+<div className="storage-note"><div className="storage-icon"><FolderOpen size={18}/></div><div><strong>Cloud storage ready</strong><p>The Reports service supports Azure Blob Storage. The storage connection is supplied as an environment secret rather than being placed in source code.</p></div><ShieldCheck size={18}/></div></Layout>}
